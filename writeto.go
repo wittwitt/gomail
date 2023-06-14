@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
+	"mime/quotedprintable"
 	"path/filepath"
 	"strings"
 	"time"
@@ -195,7 +196,7 @@ func (w *messageWriter) writeHeader(k string, v ...string) {
 			charsLeft = 75
 		}
 		w.writeString(s)
-		if i := lastIndexByte(s, '\n'); i != -1 {
+		if i := strings.LastIndexByte(s, '\n'); i != -1 {
 			charsLeft = 75 - (len(s) - i - 1)
 		} else {
 			charsLeft -= len(s)
@@ -266,7 +267,7 @@ func (w *messageWriter) writeBody(f func(io.Writer) error, enc Encoding) {
 	} else if enc == Unencoded {
 		w.err = f(subWriter)
 	} else {
-		wc := newQPWriter(subWriter)
+		wc := quotedprintable.NewWriter(subWriter)
 		w.err = f(wc)
 		wc.Close()
 	}

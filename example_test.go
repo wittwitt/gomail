@@ -1,13 +1,16 @@
 package gomail_test
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
+	"os"
+	"testing"
 	"time"
 
-	"gopkg.in/gomail.v2"
+	"github.com/wittwitt/gomail"
 )
 
 func Example() {
@@ -220,4 +223,14 @@ func ExampleSetEncoding() {
 
 func ExampleSetPartEncoding() {
 	m.SetBody("text/plain", "Hello!", gomail.SetPartEncoding(gomail.Unencoded))
+}
+
+func TestSend(t *testing.T) {
+	os.Setenv(gomail.GOMAIL_SERVER, "smtp.example.com:465")
+	os.Setenv(gomail.GOMAIL_ACCOUNT, "example@example.com")
+	os.Setenv(gomail.GOMAIL_ACCOUNT_NAME, "gomail")
+	os.Setenv(gomail.GOMAIL_PASS, "example")
+	gomail.InitEnv()
+	err := gomail.SendOnce(context.TODO(), []string{"example@example.com"}, []string{}, "gomail test email", `this is gomail test email`)
+	t.Log(err == nil)
 }

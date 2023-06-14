@@ -3,6 +3,8 @@ package gomail
 import (
 	"bytes"
 	"io"
+	"mime"
+	"net/textproto"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,17 +12,15 @@ import (
 
 // Message represents an email.
 type Message struct {
-	header      header
+	header      textproto.MIMEHeader
 	parts       []*part
 	attachments []*file
 	embedded    []*file
 	charset     string
 	encoding    Encoding
-	hEncoder    mimeEncoder
+	hEncoder    mime.WordEncoder
 	buf         bytes.Buffer
 }
-
-type header map[string][]string
 
 type part struct {
 	contentType string
@@ -32,7 +32,7 @@ type part struct {
 // by default.
 func NewMessage(settings ...MessageSetting) *Message {
 	m := &Message{
-		header:   make(header),
+		header:   make(textproto.MIMEHeader),
 		charset:  "UTF-8",
 		encoding: QuotedPrintable,
 	}
@@ -40,9 +40,9 @@ func NewMessage(settings ...MessageSetting) *Message {
 	m.applySettings(settings)
 
 	if m.encoding == Base64 {
-		m.hEncoder = bEncoding
+		m.hEncoder = mime.BEncoding
 	} else {
-		m.hEncoder = qEncoding
+		m.hEncoder = mime.QEncoding
 	}
 
 	return m
@@ -143,7 +143,7 @@ func (m *Message) FormatAddress(address, name string) string {
 		}
 		m.buf.WriteByte('"')
 	} else if hasSpecials(name) {
-		m.buf.WriteString(bEncoding.Encode(m.charset, name))
+		m.buf.WriteString(mime.BEncoding.Encode(m.charset, name))
 	} else {
 		m.buf.WriteString(enc)
 	}
